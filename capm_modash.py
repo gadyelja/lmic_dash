@@ -20,12 +20,10 @@ file = 'list_of_countries_index.xlsx'
 population = pd.read_excel(file, sheet_name=8)
 lmic = pd.read_excel(file , sheet_name= 9)
 mark_cap = pd.read_excel(file , sheet_name= 7)
-# returns = pd.read_excel(r'C:\Users\gadyh\OneDrive\Documentos\UNISABANA\CAPM - WORLDBANK\list_of_countries_index.xlsx', sheet_name = 3 )
 famafrench = pd.read_excel(file, sheet_name=  10)
 msci = pd.read_excel(file, sheet_name=  11)
 prices = pd.read_excel(file, sheet_name=  1)
 rate_ex = pd.read_excel(file, sheet_name=  5)
-
 
 mark_cap.set_index('Country', inplace = True)
 mark_cap = mark_cap.iloc[:, 0:1]
@@ -167,7 +165,7 @@ return_4_mean = return_4_mean.to_frame(name = 'Returns')
 # Tratar famafrench
 famafrench['RF'] = pd.to_numeric(famafrench['RF'], errors='coerce')
 famafrench['Mkt-RF'] = pd.to_numeric(famafrench['Mkt-RF'], errors='coerce')# Volver a numero
-famafrench.set_index('date', inplace=True)
+famafrench.set_index('Date', inplace=True)
 
 # Ri - RF
 return1_rf = (return_1_mean['Returns'] - famafrench['RF']).to_frame(name = 'Ri - Rf')
@@ -176,11 +174,223 @@ return3_rf = (return_3_mean['Returns'] - famafrench['RF']).to_frame(name = 'Ri -
 return4_rf = (return_4_mean['Returns'] - famafrench['RF']).to_frame(name = 'Ri - Rf')
 
 
-# CAPM Simple non weighted
+# Organizar df's
+group_1 = return_1.reset_index().melt(id_vars="Country", var_name="Date", value_name="Returns")
+group_1['Date'] = pd.to_datetime(group_1['Date'])
+group_1 = group_1.merge(mark_cap1, on="Country", how="left")
+group_1 = group_1.merge(famafrench, on = 'Date', how = 'left')
+group_1 = group_1.merge(msci, on = 'Date', how = 'left')
+group_1 = group_1[group_1["Returns"].notna()].copy()
+sum_mark_cap1 = group_1.groupby("Date")["mark_cap"].sum().rename("sum_mark_cap")
+group_1 = group_1.merge(sum_mark_cap1, on="Date", how="left")
+group_1["wr"] = group_1["Returns"] * (group_1["mark_cap"] )
+swr = group_1.groupby('Date')['wr'].sum().reset_index()
 
-st.markdown("""
-    <h1 style="text-align: center;">SIMPLE MODEL NON WEIGHTED</h1>
-""", unsafe_allow_html=True) 
+group_1 = group_1.merge(swr, on = 'Date', how = 'left')
+group_1 = group_1.drop_duplicates(subset='Date').reset_index(drop=True)
+group_1['Weighted_Returns'] = group_1['wr_y'] / group_1['sum_mark_cap']
+group_1 = group_1[group_1["msci"].notna()].copy()
+group_1 = group_1[group_1["Mkt-RF"].notna()].copy()
+group_1['Mean_Returns'] = group_1.groupby('Date')['Returns'].transform('mean')
+group_1['Re-Rf'] = group_1['Mean_Returns'] - group_1['RF']
+group_1['Wr-Rf'] = group_1['Weighted_Returns'] - group_1['RF']
+group_1 = group_1.drop('Country', axis=1)
+
+
+group_2 = return_2.reset_index().melt(id_vars="Country", var_name="Date", value_name="Returns")
+group_2['Date'] = pd.to_datetime(group_2['Date'])
+group_2 = group_2.merge(mark_cap2, on="Country", how="left")
+group_2 = group_2.merge(famafrench, on = 'Date', how = 'left')
+group_2 = group_2.merge(msci, on = 'Date', how = 'left')
+group_2 = group_2[group_2["Returns"].notna()].copy()
+sum_mark_cap2 = group_2.groupby("Date")["mark_cap"].sum().rename("sum_mark_cap")
+group_2 = group_2.merge(sum_mark_cap2, on="Date", how="left")
+group_2["wr"] = group_2["Returns"] * (group_2["mark_cap"] )
+swr2 = group_2.groupby('Date')['wr'].sum().reset_index()
+group_2 = group_2.merge(swr2, on = 'Date', how = 'left')
+group_2 = group_2.drop_duplicates(subset='Date').reset_index(drop=True)
+group_2['Weighted_Returns'] = group_2['wr_y'] / group_2['sum_mark_cap']
+group_2 = group_2[group_2["msci"].notna()].copy()
+group_2 = group_2[group_2["Mkt-RF"].notna()].copy()
+group_2['Mean_Returns'] = group_2.groupby('Date')['Returns'].transform('mean')
+group_2['Re-Rf'] = group_2['Mean_Returns'] - group_2['RF']
+group_2['Wr-Rf'] = group_2['Weighted_Returns'] - group_2['RF']
+group_2 = group_2.drop('Country', axis=1)
+
+
+group_3 = return_3.reset_index().melt(id_vars="Country", var_name="Date", value_name="Returns")
+group_3['Date'] = pd.to_datetime(group_3['Date'])
+group_3 = group_3.merge(mark_cap3, on="Country", how="left")
+group_3 = group_3.merge(famafrench, on = 'Date', how = 'left')
+group_3 = group_3.merge(msci, on = 'Date', how = 'left')
+group_3 = group_3[group_3["Returns"].notna()].copy()
+sum_mark_cap3 = group_3.groupby("Date")["mark_cap"].sum().rename("sum_mark_cap")
+group_3 = group_3.merge(sum_mark_cap3, on="Date", how="left")
+group_3["wr"] = group_3["Returns"] * (group_3["mark_cap"] )
+swr3 = group_3.groupby('Date')['wr'].sum().reset_index()
+group_3 = group_3.merge(swr3, on = 'Date', how = 'left')
+group_3 = group_3.drop_duplicates(subset='Date').reset_index(drop=True)
+group_3['Weighted_Returns'] = group_3['wr_y'] / group_3['sum_mark_cap']
+group_3 = group_3[group_3["msci"].notna()].copy()
+group_3 = group_3[group_3["Mkt-RF"].notna()].copy()
+group_3['Mean_Returns'] = group_3.groupby('Date')['Returns'].transform('mean')
+group_3['Re-Rf'] = group_3['Mean_Returns'] - group_3['RF']
+group_3['Wr-Rf'] = group_3['Weighted_Returns'] - group_3['RF']
+group_3 = group_3.drop('Country', axis=1)
+
+group_4 = return_4.reset_index().melt(id_vars="Country", var_name="Date", value_name="Returns")
+group_4['Date'] = pd.to_datetime(group_4['Date'])
+group_4 = group_4.merge(mark_cap4, on="Country", how="left")
+group_4 = group_4.merge(famafrench, on = 'Date', how = 'left')
+group_4 = group_4.merge(msci, on = 'Date', how = 'left')
+group_4 = group_4[group_4["Returns"].notna()].copy()
+sum_mark_cap4 = group_4.groupby("Date")["mark_cap"].sum().rename("sum_mark_cap")
+group_4 = group_4.merge(sum_mark_cap4, on="Date", how="left")
+group_4["wr"] = group_4["Returns"] * (group_4["mark_cap"] )
+swr4 = group_4.groupby('Date')['wr'].sum().reset_index()
+group_4 = group_4.merge(swr4, on = 'Date', how = 'left')
+group_4 = group_4.drop_duplicates(subset='Date').reset_index(drop=True)
+group_4['Weighted_Returns'] = group_4['wr_y'] / group_4['sum_mark_cap']
+group_4 = group_4[group_4["msci"].notna()].copy()
+group_4 = group_4[group_4["Mkt-RF"].notna()].copy()
+group_4['Mean_Returns'] = group_4.groupby('Date')['Returns'].transform('mean')
+group_4['Re-Rf'] = group_4['Mean_Returns'] - group_4['RF']
+group_4['Wr-Rf'] = group_4['Weighted_Returns'] - group_4['RF']
+group_4 = group_4.drop('Country', axis=1)
+
+
+#######################################################################################################################
+st.write('Grpup 1',group_1)
+st.write('Grpup 2',group_2)
+st.write('Grpup 3',group_3)
+st.write('Grpup 4',group_4)
+
+
+#######################################################################################################################
+
+
+
+# Simple model non weighted
+# Grupo 1
+y1 = group_1["Re-Rf"] 
+x1 = group_1["Mkt-RF"] 
+x1 = sm.add_constant(x1)
+model1 = sm.OLS(y1, x1).fit()
+
+# Grupo 2
+y2 = group_2['Re-Rf']
+x2 = group_2['Mkt-RF']
+x2 = sm.add_constant(x2)
+model2 = sm.OLS(y2, x2).fit()
+
+# Grupo 3
+y3 = group_3['Re-Rf']
+x3 = group_3['Mkt-RF']
+x3 = sm.add_constant(x3)
+model3 = sm.OLS(y3, x3).fit()
+
+# Group 4
+y4 = group_4['Re-Rf']
+x4 = group_4['Mkt-RF']
+x4 = sm.add_constant(x4)
+model4 = sm.OLS(y4, x4).fit()
+
+#######################################################################################################################
+# Simple model weighted
+# Group 1
+y9 = group_1['Wr-Rf'] * 100
+x9 = group_1["Mkt-RF"]  * 100
+x9 = sm.add_constant(x9)
+model9 = sm.OLS(y9, x9).fit() 
+
+# Group 2
+y10 = group_2['Wr-Rf'] * 100
+x10 = group_2["Mkt-RF"]  * 100
+x10 = sm.add_constant(x10)
+model10 = sm.OLS(y10, x10).fit() 
+
+# Group 3
+y11 = group_3['Wr-Rf'] * 100
+x11 = group_3["Mkt-RF"]  * 100
+x11 = sm.add_constant(x11)
+model11 = sm.OLS(y11, x11).fit()
+
+# Grouo 4
+y12 = group_4['Wr-Rf'] * 100
+x12 = group_4["Mkt-RF"]  * 100
+x12 = sm.add_constant(x12)
+model12 = sm.OLS(y12, x12).fit()
+
+
+#######################################################################################################################
+# Multifactorial model non weighted
+# Group 1
+y13 = group_1['Re-Rf'] *100
+msci13 = group_1['msci'] *100
+x13 = group_1["Mkt-RF"]  * 100
+x13 = pd.concat([x13, msci13], axis = 1)
+x13 = sm.add_constant(x13)
+model13 = sm.OLS(y13, x13).fit() 
+
+# Group 2
+y14 = group_2['Re-Rf'] *100
+msci14 = group_2['msci'] *100
+x14 = group_2["Mkt-RF"]  * 100
+x14 = pd.concat([x14, msci14], axis = 1)
+x14 = sm.add_constant(x14)
+model14 = sm.OLS(y14, x14).fit() 
+
+# Group 3
+y15 = group_3['Re-Rf'] *100
+msci15 = group_3['msci'] *100
+x15 = group_3["Mkt-RF"]  * 100
+x15 = pd.concat([x15, msci15], axis = 1)
+x15 = sm.add_constant(x15)
+model15 = sm.OLS(y15, x15).fit() 
+
+# Group 4
+y16 = group_4['Re-Rf'] *100
+msci16 = group_4['msci'] *100
+x16 = group_4["Mkt-RF"]  * 100
+x16 = pd.concat([x16, msci16], axis = 1)
+x16 = sm.add_constant(x16)
+model16 = sm.OLS(y16, x16).fit() 
+
+#######################################################################################################################
+# Multifactorial model  weighted
+# group 1
+y5 = group_1['Wr-Rf'] *100
+msci1 = group_1['msci'] *100
+x5 = group_1["Mkt-RF"]  * 100
+x5 = pd.concat([x5, msci1], axis = 1)
+x5 = sm.add_constant(x5)
+model5 = sm.OLS(y5, x5).fit() 
+
+# group 2
+y6 = group_2['Wr-Rf'] *100
+msci2 = group_2['msci'] *100
+x6 = group_2["Mkt-RF"]  * 100
+x6 = pd.concat([x6, msci2], axis = 1)
+x6 = sm.add_constant(x6)
+model6 = sm.OLS(y6, x6).fit() 
+
+# group 3
+y7 = group_3['Wr-Rf'] *100
+msci3 = group_3['msci'] *100
+x7 = group_3["Mkt-RF"]  * 100
+x7 = pd.concat([x7, msci3], axis = 1)
+x7 = sm.add_constant(x7)
+model7 = sm.OLS(y7, x7).fit() 
+
+# group 4
+y8 = group_4['Wr-Rf'] *100
+msci4 = group_4['msci'] *100
+x8 = group_4["Mkt-RF"]  * 100
+x8 = pd.concat([x8, msci3], axis = 1)
+x8 = sm.add_constant(x8)
+model8 = sm.OLS(y8, x8).fit() 
+
+####################################################################################################
 
 def extract_model_summary(model):
     """Extrae coeficientes, errores estándar, p-valores, R² y otras métricas."""
@@ -196,288 +406,116 @@ def extract_model_summary(model):
     summary_df.loc["F-Statistical", "Coefficients"] = model.fvalue
     return summary_df
 
-# Grupo 1
-Y_1 = return1_rf.iloc[:-1, :]
-X = famafrench['Mkt-RF']
-X = sm.add_constant(X)  
-modelo1 = sm.OLS(Y_1, X).fit()
 
-# Grupo 2
-Y_2 = return2_rf.iloc[:-1, :]
-modelo2 = sm.OLS(Y_2, X).fit()
-
-# Grupo 3
-Y_3 = return3_rf.iloc[:-1, :]
-modelo3 = sm.OLS(Y_3, X).fit()
-
-# Grupo 4
-Y_4 = return4_rf.iloc[:-1, :]
-modelo4 = sm.OLS(Y_4, X).fit()
+st.markdown("""
+    <h1 style="text-align: center;">SIMPLE MODEL NON WEIGHTED</h1>
+""", unsafe_allow_html=True) 
 
 col1, col2, col3, col4 = st.columns(4)
 
-with col1: 
+with col1:
     st.write('Simple model non weighted for group 1:' )
-    modelo1 = extract_model_summary(modelo1)
-    st.dataframe(modelo1, use_container_width=True)
-    
-with col2: 
+    modelo1 = extract_model_summary(model1)
+    st.dataframe(modelo1, use_container_width=True)     
+
+with col2:
     st.write('Simple model non weighted for group 2:' )
-    modelo2 = extract_model_summary(modelo2)
-    st.dataframe(modelo2, use_container_width=True)
-    
+    modelo2 = extract_model_summary(model2)
+    st.dataframe(modelo2, use_container_width=True)     
+
 with col3:
     st.write('Simple model non weighted for group 3:' )
-    modelo3 = extract_model_summary(modelo3)
-    st.dataframe(modelo3, use_container_width=True) 
+    modelo3 = extract_model_summary(model3)
+    st.dataframe(modelo3, use_container_width=True)  
     
-with col4: 
-    st.write('Simple model non weighted for group 4: ')
-    modelo4 = extract_model_summary(modelo4)
-    st.dataframe(modelo4, use_container_width=True)
+with col4:
+    st.write('Simple model non weighted for group 4:' )
+    modelo4 = extract_model_summary(model4)
+    st.dataframe(modelo4, use_container_width=True)        
 
-# Simple models weighted
 
 st.markdown("""
     <h1 style="text-align: center;">SIMPLE MODEL WEIGHTED</h1>
 """, unsafe_allow_html=True) 
 
-famafrench = famafrench.reset_index()
-
-# Grupo 1
-return_1 = return_1.fillna(0)
-df_long = return_1.reset_index().melt(id_vars="Country", var_name="Date", value_name="Returns")
-df_long.rename(columns={"index": "Date"}, inplace=True)
-df_final = df_long.merge(mark_cap1, on="Country", how="left")
-# Suponiendo que tu DataFrame se llama df
-df = df_final.copy()  # Para evitar advertencias en caso de modificar el DataFrame original
-# Filtrar para ignorar retornos 0
-df_filtered = df[df["Returns"] != 0].copy()
-df_filtered["Date"] = pd.to_datetime(df_filtered["Date"])
-# Calcular la suma de mark_cap por fecha ignorando retornos 0
-sum_mark_cap = df_filtered.groupby("Date")["mark_cap"].sum().rename("sum_mark_cap")
-# Merge con el DataFrame original (incluyendo los valores filtrados)
-df_filtered = df_filtered.merge(sum_mark_cap, on="Date", how="left")
-# Calcular retorno ponderado
-df_filtered["Weighted_Returns"] = df_filtered["Returns"] * (df_filtered["mark_cap"] / df_filtered["sum_mark_cap"])
-# Calcular el retorno total ponderado por fecha
-weighted1_returns = df_filtered.groupby("Date")["Weighted_Returns"].sum().reset_index()
-return4_rf = (weighted1_returns['Weighted_Returns'] - famafrench['RF']).to_frame(name = 'WRi - Rf')
-
-# Grupo 2
-return_2 = return_2.fillna(0)
-df_long1 = return_2.reset_index().melt(id_vars="Country", var_name="Date", value_name="Returns")
-df_long1.rename(columns={"index": "Date"}, inplace=True)
-df_final1 = df_long1.merge(mark_cap2, on="Country", how="left")
-df1 = df_final1.copy()  
-df_filtered1 = df1[df1["Returns"] != 0].copy()
-df_filtered1["Date"] = pd.to_datetime(df_filtered1["Date"])
-sum_mark_cap2 = df_filtered1.groupby("Date")["mark_cap"].sum().rename("sum_mark_cap")
-df_filtered1 = df_filtered1.merge(sum_mark_cap2, on="Date", how="left")
-df_filtered1["Weighted_Returns"] = df_filtered1["Returns"] * (df_filtered1["mark_cap"] / df_filtered1["sum_mark_cap"])
-weighted2_returns = df_filtered1.groupby("Date")["Weighted_Returns"].sum().reset_index()
-return5_rf = (weighted2_returns['Weighted_Returns'] - famafrench['RF']).to_frame(name = 'WRi - Rf')
-
-# Grupo 3
-return_3 = return_3.fillna(0)
-df_long2 = return_3.reset_index().melt(id_vars="Country", var_name="Date", value_name="Returns")
-df_long2.rename(columns={"index": "Date"}, inplace=True)
-df_final2 = df_long2.merge(mark_cap3, on="Country", how="left")
-df2 = df_final2.copy()  
-df_filtered2 = df2[df2["Returns"] != 0].copy()
-df_filtered2["Date"] = pd.to_datetime(df_filtered2["Date"])
-sum_mark_cap3 = df_filtered2.groupby("Date")["mark_cap"].sum().rename("sum_mark_cap")
-df_filtered2 = df_filtered2.merge(sum_mark_cap3, on="Date", how="left")
-df_filtered2["Weighted_Returns"] = df_filtered2["Returns"] * (df_filtered2["mark_cap"] / df_filtered2["sum_mark_cap"])
-weighted3_returns = df_filtered2.groupby("Date")["Weighted_Returns"].sum().reset_index()
-return6_rf = (weighted3_returns['Weighted_Returns'] - famafrench['RF']).to_frame(name = 'WRi - Rf')
-
-# Grupo 4
-return_4 = return_4.fillna(0)
-df_long3 = return_4.reset_index().melt(id_vars="Country", var_name="Date", value_name="Returns")
-df_long3.rename(columns={"index": "Date"}, inplace=True)
-df_final3 = df_long3.merge(mark_cap4, on="Country", how="left")
-df3 = df_final3.copy()  
-df_filtered3 = df3[df3["Returns"] != 0].copy()
-df_filtered3["Date"] = pd.to_datetime(df_filtered3["Date"])
-sum_mark_cap4 = df_filtered3.groupby("Date")["mark_cap"].sum().rename("sum_mark_cap")
-df_filtered3 = df_filtered3.merge(sum_mark_cap4, on="Date", how="left")
-df_filtered3["Weighted_Returns"] = df_filtered3["Returns"] * (df_filtered3["mark_cap"] / df_filtered3["sum_mark_cap"])
-weighted4_returns = df_filtered3.groupby("Date")["Weighted_Returns"].sum().reset_index()
-return7_rf = (weighted4_returns['Weighted_Returns'] - famafrench['RF']).to_frame(name = 'WRi - Rf')
-
-# Modelos simples weighted
-# modelo 1
-Y_4 = return4_rf.iloc[:-1, :]
-X = famafrench['Mkt-RF']
-X = sm.add_constant(X)  
-modelo5 = sm.OLS(Y_4, X).fit()
-
-# Modelo 2
-Y_5 = return5_rf.iloc[:-1, :]
-modelo6 = sm.OLS(Y_5, X).fit()
-
-# Modelo 3
-Y_6 = return6_rf.iloc[:-1, :]
-modelo7 = sm.OLS(Y_6, X).fit()
-
-# Modelo 4
-Y_7 = return7_rf.iloc[:-1, :]
-modelo8 = sm.OLS(Y_7, X).fit()
-
 col1, col2, col3, col4 = st.columns(4)
-with col1: 
-    st.write('Simple model weighted for group 1:' )
-    modelo5 = extract_model_summary(modelo5)
-    st.dataframe(modelo5, use_container_width=True) 
 
-with col2: 
-    st.write('Simple model weighted for group 2:' )
-    modelo6 = extract_model_summary(modelo6)
-    st.dataframe(modelo6, use_container_width=True) 
+with col1:
+    st.write('Simple model non weighted for group 1:' )
+    modelo9 = extract_model_summary(model9)
+    st.dataframe(modelo9, use_container_width=True)     
 
-with col3: 
+with col2:
+    st.write('Simple model non weighted for group 2:' )
+    modelo10 = extract_model_summary(model10)
+    st.dataframe(modelo10, use_container_width=True)     
+
+with col3:
     st.write('Simple model non weighted for group 3:' )
-    modelo7 = extract_model_summary(modelo7)
-    st.dataframe(modelo7, use_container_width=True) 
-
-with col4: 
-    st.write('Simple modelo weighted for group 4:')
-    modelo8 = extract_model_summary(modelo8)
-    st.dataframe(modelo8, use_container_width=True)
+    modelo11 = extract_model_summary(model11)
+    st.dataframe(modelo11, use_container_width=True)  
     
-   
-# Multifactorial model non weighted
-
+with col4:
+    st.write('Simple model non weighted for group 4:' )
+    modelo12 = extract_model_summary(model12)
+    st.dataframe(modelo12, use_container_width=True)    
+    
 st.markdown("""
     <h1 style="text-align: center;">MULTIFACTORIAL MODEL NON WEIGHTED</h1>
 """, unsafe_allow_html=True) 
 
-# Grupo 1
-Y_7 = return1_rf.reset_index().iloc[:-1, 1:]
-X_11 = msci.iloc[:-1, :1]
-X_1 = pd.concat([famafrench['Mkt-RF'], X_11], axis = 1)
-X_1 = sm.add_constant(X_1)
-
-model9 = sm.OLS(Y_7, X_1).fit()
-
-# grupo 2
-Y_8 = return2_rf.reset_index().iloc[:-1, 1:]
-X_22 = msci.iloc[:-1, :1]
-X_2 = pd.concat([famafrench['Mkt-RF'], X_22], axis = 1)
-X_2 = sm.add_constant(X_2)
-model10 = sm.OLS(Y_8, X_2).fit()
-
-# Grupo 3
-Y_9 = return3_rf.reset_index().iloc[:-1, 1:]
-X_33 = msci.iloc[:-1, :1]
-X_3 = pd.concat([famafrench['Mkt-RF'], X_33], axis = 1)
-X_3 = sm.add_constant(X_3)
-model11 = sm.OLS(Y_9, X_3).fit()
-
-# Grupo 4
-Y_10 = return4_rf.reset_index().iloc[:-1, 1:]
-X_44 = msci.iloc[:-1, :1]
-X_4 = pd.concat([famafrench['Mkt-RF'], X_44], axis = 1)
-X_4 = sm.add_constant(X_4)
-model12 = sm.OLS(Y_10, X_4).fit()
-
-
 col1, col2, col3, col4 = st.columns(4)
-with col1: 
-    st.write('Multifactorial model non weighted for group 1:' )
-    modelo9 = extract_model_summary(model9)
-    st.dataframe(modelo9, use_container_width=True) 
 
-with col2: 
-    st.write('Multifactorial model non weighted for group 2:' )
-    modelo10 = extract_model_summary(model10)
-    st.dataframe(modelo10, use_container_width=True) 
+with col1:
+    st.write('Simple model non weighted for group 1:' )
+    modelo13 = extract_model_summary(model13)
+    st.dataframe(modelo13, use_container_width=True)     
 
-with col3: 
-    st.write('Multifactorial model non weighted for group 3:' )
-    modelo11 = extract_model_summary(model11)
-    st.dataframe(modelo11, use_container_width=True) 
+with col2:
+    st.write('Simple model non weighted for group 2:' )
+    modelo14 = extract_model_summary(model14)
+    st.dataframe(modelo14, use_container_width=True)     
+
+with col3:
+    st.write('Simple model non weighted for group 3:' )
+    modelo15 = extract_model_summary(model15)
+    st.dataframe(modelo15, use_container_width=True)  
     
-with col4: 
-    st.write('Multifactorial model non weighted for group 4:')
-    modelo12 = extract_model_summary(model12)
-    st.dataframe(modelo12, use_container_width=True)
+with col4:
+    st.write('Simple model non weighted for group 4:' )
+    modelo16 = extract_model_summary(model16)
+    st.dataframe(modelo16, use_container_width=True)   
     
     
-# Multifactorial model Weighted
 st.markdown("""
     <h1 style="text-align: center;">MULTIFACTORIAL MODEL WEIGHTED</h1>
 """, unsafe_allow_html=True) 
 
-# Modelo 1
-Y_11 = return4_rf.iloc[:-1, :]
-X_55 = msci.iloc[:-1, :1]
-X_5 = pd.concat([famafrench['Mkt-RF'], X_55], axis = 1)
-X_5 = sm.add_constant(X_5)
-model10 = sm.OLS(Y_11, X_5).fit()
-
-# Modelo 2
-Y_12 = return5_rf.iloc[:-1, :]
-X_66 = msci.iloc[:-1, :1]
-X_6 = pd.concat([famafrench['Mkt-RF'], X_66], axis = 1)
-X_6 = sm.add_constant(X_6)
-model11 = sm.OLS(Y_12, X_6).fit()
-
-# Modelo 3
-Y_13 = return6_rf.iloc[:-1, :]
-X_77 = msci.iloc[:-1, :1]
-X_7 = pd.concat([famafrench['Mkt-RF'], X_77], axis = 1)
-X_7 = sm.add_constant(X_7)
-model12 = sm.OLS(Y_13, X_7).fit()
-
-# Modelo 4
-Y_14 = return7_rf.iloc[:-1, :]
-X_88 =msci.iloc[:-1, :1]
-X_8 = pd.concat([famafrench['Mkt-RF'], X_88], axis = 1)
-X_8 = sm.add_constant(X_8)
-model13 = sm.OLS(Y_14, X_8).fit()
-
-
 col1, col2, col3, col4 = st.columns(4)
-with col1: 
-    st.write('Multifactorial model weighted for group 1:' )
-    modelo10 = extract_model_summary(model10)
-    st.dataframe(modelo10, use_container_width=True)
 
-with col2: 
-    st.write('Multifactorial model weighted for group 2:' )
-    modelo11 = extract_model_summary(model11)
-    st.dataframe(modelo11, use_container_width=True)
-    
-with col3: 
-    st.write('Multifactorial model weighted for group 3:' )
-    modelo12 = extract_model_summary(model12)
-    st.dataframe(modelo12, use_container_width=True)
-
-with col4: 
-    st.write('Multifactorial modelo weighted for group 4: ')
-    modelo13 = extract_model_summary(model13)
-    st.dataframe(modelo13, use_container_width=True)
-
-
-col1, col2 = st.columns(2)
 with col1:
-    st.write('Group 1:')
-    st.dataframe(df_filtered, use_container_width=True)
-    
-    st.write('Grouop 3')
-    st.dataframe(df_filtered2, use_container_width=True)
-    
+    st.write('Simple model non weighted for group 1:' )
+    modelo5 = extract_model_summary(model5)
+    st.dataframe(modelo5, use_container_width=True)     
+
 with col2:
-    st.write('Group 2:')
-    st.dataframe(df_filtered1, use_container_width=True)
+    st.write('Simple model non weighted for group 2:' )
+    modelo6 = extract_model_summary(model6)
+    st.dataframe(modelo6, use_container_width=True)     
+
+with col3:
+    st.write('Simple model non weighted for group 3:' )
+    modelo7 = extract_model_summary(model7)
+    st.dataframe(modelo7, use_container_width=True)  
     
-    st.write('Grouop 4')
-    st.dataframe(df_filtered3, use_container_width=True)
+with col4:
+    st.write('Simple model non weighted for group 4:' )
+    modelo8 = extract_model_summary(model8)
+    st.dataframe(modelo8, use_container_width=True)   
+    
+    
 
 
 
 
-
-# python -m streamlit run "C:\Users\gadyh\OneDrive\Documentos\UNISABANA\capm_modash.py"
+# python -m streamlit run "C:\Users\gadyh\OneDrive\Documentos\UNISABANA\capm_dash.py"
