@@ -25,6 +25,7 @@ msci = pd.read_excel(file, sheet_name=  11)
 prices = pd.read_excel(file, sheet_name=  1)
 rate_ex = pd.read_excel(file, sheet_name=  5)
 
+
 mark_cap.set_index('Country', inplace = True)
 mark_cap = mark_cap.iloc[:, 0:1]
 prices.set_index('Country', inplace = True)
